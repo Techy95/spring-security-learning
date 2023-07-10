@@ -1,0 +1,13 @@
+
+server:
+  port: 8000
+
+
+logging:
+  level:
+    root: INFO
+
+spring:
+  devtools:
+    restart:
+      additional-paths: src/main/java

@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.stereotype.Component;
 
 import static com.secured.security.ApplicationUserPermission.COURSE_READ;
@@ -24,7 +25,7 @@ import static com.secured.security.ApplicationUserRole.STUDENT;
 
 @Component
 @EnableWebSecurity
-@EnableGlobalMethodSecurity //  For Enabling Pre Authorization Of Methods In Global Level
+@EnableGlobalMethodSecurity(prePostEnabled = true) //  For Enabling Pre Authorization Of Methods In Global Level
 @AllArgsConstructor
 public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
 
@@ -36,7 +37,13 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
          *  it exists further antMatching statements
          */
         http
-                .csrf().disable()
+                .csrf().disable() //  Disable csrf
+//                .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+//                .and()
+                /**
+                 *  In the above line, Cookies will be inaccessible to client side script
+                 *  (even for front end javascript component
+                 */
                 .authorizeRequests()
                 .antMatchers("/", "/css/*", "/js/*").permitAll()    //  Permit mentioned URIs to -  all
                 .antMatchers("/api/**").hasRole(STUDENT.name())                          //      - students

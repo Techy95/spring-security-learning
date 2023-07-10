@@ -13,7 +13,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.secured.security.ApplicationUserPermission.COURSE_READ;
 import static com.secured.security.ApplicationUserPermission.COURSE_WRITE;
@@ -64,17 +67,33 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
                  *      Below is form based authentication with session maintenance
                  */
                 .formLogin()
-                .loginPage("/login").permitAll()
-                .defaultSuccessUrl("/courses", true)
+                    .loginPage("/login").permitAll()
+                    .defaultSuccessUrl("/courses", true)
+                    .usernameParameter("user")
+                    .passwordParameter("password")
                 /**
+                 *
                  *  The default session storage is for 30 minutes if explicitly .rememberMe() is not used
                  *  If we are using .rememberMe() then default session storage value is of 2 weeks
                  *  in an in-memory database of spring security
                  *
-                 *
                  */
                 .and()
-                .rememberMe();
+                .rememberMe()
+                    .tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(21L))
+                    .key("somethingverysecured")
+                    .rememberMeParameter("remember-me")
+                .and()
+                .logout()
+                .logoutUrl("/logout")
+        /**         If CSRF is disabled, then logout can be GET type, else it MUST BE POST request      */
+                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
+//                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "POST"))
+                    .clearAuthentication(true)
+                    .invalidateHttpSession(true)
+                    .deleteCookies("JSESSIONID", "remember-me")
+                    .logoutSuccessUrl("/login")
+        ;
     }
 
     @Override

@@ -4,7 +4,15 @@ import com.secured.model.Student;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +23,7 @@ import java.util.List;
 public class StudentManagementController {
 
     @GetMapping("/students/{studentId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_TRAINEE')")
     public ResponseEntity<Student> getStudentById(@PathVariable("studentId") int id) {
         log.info("called -> {} - getStudentById", SOURCE_CLASS);
         id--;
@@ -23,6 +32,7 @@ public class StudentManagementController {
     }
 
     @GetMapping("/students")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_TRAINEE')")
     public ResponseEntity<Student> getAllStudent() {
         log.info("called -> {} - getAllStudent", SOURCE_CLASS);
         log.info("getAllStudent - returned - {}", this.STUDENTS);
@@ -30,14 +40,17 @@ public class StudentManagementController {
     }
 
     @DeleteMapping("/students/{id}")
-    public void deleteSingleStudent(@PathVariable("id") int id) {
+    @PreAuthorize("hasAuthority('student:write')")
+    public ResponseEntity<Void> deleteSingleStudent(@PathVariable("id") int id) {
         log.info("called -> {} - deleteSingleStudent", SOURCE_CLASS);
         id--;
         log.info("Successfully deleted the student with id: {}", id);
 //        STUDENTS
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/students/{id}")
+    @PreAuthorize("hasAuthority('student:write')")
     public ResponseEntity<Student> updateStudent(@PathVariable("id") int id, @RequestBody Student student) {
         log.info("called -> {} - updateStudent", SOURCE_CLASS);
         id--;
@@ -48,6 +61,7 @@ public class StudentManagementController {
     }
 
     @PostMapping("/students")
+    @PreAuthorize("hasAuthority('student:write')")
     public ResponseEntity<Student> updateStudent( @RequestBody Student student) {
         log.info("called -> {} - updateStudent", SOURCE_CLASS);
         student.setId(STUDENTS.size());

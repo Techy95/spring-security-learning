@@ -65,7 +65,16 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
                  */
                 .formLogin()
                 .loginPage("/login").permitAll()
-                .defaultSuccessUrl("/courses", true);
+                .defaultSuccessUrl("/courses", true)
+                /**
+                 *  The default session storage is for 30 minutes if explicitly .rememberMe() is not used
+                 *  If we are using .rememberMe() then default session storage value is of 2 weeks
+                 *  in an in-memory database of spring security
+                 *
+                 *
+                 */
+                .and()
+                .rememberMe();
     }
 
     @Override

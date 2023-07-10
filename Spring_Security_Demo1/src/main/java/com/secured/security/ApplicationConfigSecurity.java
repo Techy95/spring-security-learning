@@ -58,7 +58,12 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
                 .anyRequest()
                 .authenticated()
                 .and()
-                .httpBasic();
+                .formLogin();
+        /**
+         *      Above is form based authentication with session maintenance
+         *      Below for Basuc Authentication - where we can't logout
+         */
+//                .httpBasic();
     }
 
     @Override

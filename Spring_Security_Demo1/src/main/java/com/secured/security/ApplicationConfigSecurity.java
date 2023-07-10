@@ -1,10 +1,15 @@
 package com.secured.security;
 
+import com.secured.auth.ApplicationUserService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configurers.userdetails.DaoAuthenticationConfigurer;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.User;
@@ -29,7 +34,6 @@ import static com.secured.security.ApplicationUserRole.STUDENT;
 @Component
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true) //  For Enabling Pre Authorization Of Methods In Global Level
-@AllArgsConstructor
 public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
 
     @Override
@@ -69,7 +73,7 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
                 .formLogin()
                     .loginPage("/login").permitAll()
                     .defaultSuccessUrl("/courses", true)
-                    .usernameParameter("user")
+                    .usernameParameter("username")
                     .passwordParameter("password")
                 /**
                  *
@@ -95,7 +99,7 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
                     .logoutSuccessUrl("/login")
         ;
     }
-
+/*
     @Override
     @Bean
     public UserDetailsService userDetailsServiceBean() throws Exception {
@@ -120,7 +124,26 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
         return new InMemoryUserDetailsManager(abc,
                 admin,
                 adminTrainee);
+    }*/
+
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(daoAuthenticationProvider());
+    }
+
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setPasswordEncoder(encoder);
+        provider.setUserDetailsService(userService);
+        return provider;
+    }
+
+    public ApplicationConfigSecurity(PasswordEncoder encoder, ApplicationUserService userService) {
+        this.encoder=encoder;
+        this.userService=userService;
     }
 
     private final PasswordEncoder encoder;
+    private final ApplicationUserService userService;
 }

@@ -11,3 +11,10 @@ spring:
   devtools:
     restart:
       additional-paths: src/main/java
+
+application:
+  jwt:
+    tokenPrefix: 'Bearer '
+    secretKey: zyxwvuzyxwvuzyxwvuabcabcxyzzyxwvuzyxwvuzyxwvuabcabcxyz
+    tokenExpirationDays: 1
+

@@ -1,37 +1,21 @@
 package com.secured.security;
 
 import com.secured.auth.ApplicationUserService;
-import com.secured.auth.JwtTokenVerifier;
+import com.secured.jwt.JwtTokenVerifier;
 import com.secured.jwt.JWTUserNameAndPasswordAuthFilter;
-import lombok.AllArgsConstructor;
+import com.secured.jwt.config.JwtConfigs;
+import com.secured.jwt.config.JwtSecretKey;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.authentication.configurers.userdetails.DaoAuthenticationConfigurer;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.TimeUnit;
-
-import static com.secured.security.ApplicationUserPermission.COURSE_READ;
-import static com.secured.security.ApplicationUserPermission.COURSE_WRITE;
-import static com.secured.security.ApplicationUserPermission.STUDENT_READ;
-import static com.secured.security.ApplicationUserPermission.STUDENT_WRITE;
-import static com.secured.security.ApplicationUserRole.ADMIN;
-import static com.secured.security.ApplicationUserRole.ADMIN_TRAINEE;
 import static com.secured.security.ApplicationUserRole.STUDENT;
 
 @Component
@@ -59,8 +43,8 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
                 .sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilter(new JWTUserNameAndPasswordAuthFilter(authenticationManager()))
-                .addFilterAfter(new JwtTokenVerifier(), JWTUserNameAndPasswordAuthFilter.class)
+                .addFilter(new JWTUserNameAndPasswordAuthFilter(authenticationManager(), secretKey, jwtConfiguration))
+                .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfiguration), JWTUserNameAndPasswordAuthFilter.class)
                 .authorizeRequests()
                 .antMatchers("/", "/css/*", "/js/*").permitAll()    //  Permit mentioned URIs to -  all
                 .antMatchers("/api/**").hasRole(STUDENT.name())                          //      - students
@@ -89,11 +73,15 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
         return provider;
     }
 
-    public ApplicationConfigSecurity(PasswordEncoder encoder, ApplicationUserService userService) {
+    public ApplicationConfigSecurity(PasswordEncoder encoder, ApplicationUserService userService, JwtSecretKey secretKey, JwtConfigs jwtConfiguration) {
         this.encoder=encoder;
         this.userService=userService;
+        this.secretKey = secretKey;
+        this.jwtConfiguration = jwtConfiguration;
     }
 
     private final PasswordEncoder encoder;
     private final ApplicationUserService userService;
+    private final JwtSecretKey secretKey;
+    private final JwtConfigs jwtConfiguration;
 }

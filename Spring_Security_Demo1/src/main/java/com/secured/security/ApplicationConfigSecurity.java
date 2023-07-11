@@ -1,6 +1,8 @@
 package com.secured.security;
 
 import com.secured.auth.ApplicationUserService;
+import com.secured.auth.JwtTokenVerifier;
+import com.secured.jwt.JWTUserNameAndPasswordAuthFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
@@ -12,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -50,7 +53,14 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
                 /**
                  *  In the above line, Cookies will be inaccessible to client side script
                  *  (even for front end javascript component
+                 *
+                 *  In below 3 lines, we have added the Stateless session management and JWT based authentication filter
                  */
+                .sessionManagement()
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilter(new JWTUserNameAndPasswordAuthFilter(authenticationManager()))
+                .addFilterAfter(new JwtTokenVerifier(), JWTUserNameAndPasswordAuthFilter.class)
                 .authorizeRequests()
                 .antMatchers("/", "/css/*", "/js/*").permitAll()    //  Permit mentioned URIs to -  all
                 .antMatchers("/api/**").hasRole(STUDENT.name())                          //      - students
@@ -63,68 +73,8 @@ public class ApplicationConfigSecurity extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.PATCH,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission())                          //      - students
                 .antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(ADMIN.name(), ADMIN_TRAINEE.name()) */                         //      - students
                 .anyRequest()
-                .authenticated()
-                .and()
-//                .httpBasic();
-                /**
-                 *      Above for Basic Authentication - where we can't logout
-                 *      Below is form based authentication with session maintenance
-                 */
-                .formLogin()
-                    .loginPage("/login").permitAll()
-                    .defaultSuccessUrl("/courses", true)
-                    .usernameParameter("username")
-                    .passwordParameter("password")
-                /**
-                 *
-                 *  The default session storage is for 30 minutes if explicitly .rememberMe() is not used
-                 *  If we are using .rememberMe() then default session storage value is of 2 weeks
-                 *  in an in-memory database of spring security
-                 *
-                 */
-                .and()
-                .rememberMe()
-                    .tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(21L))
-                    .key("somethingverysecured")
-                    .rememberMeParameter("remember-me")
-                .and()
-                .logout()
-                .logoutUrl("/logout")
-        /**         If CSRF is disabled, then logout can be GET type, else it MUST BE POST request      */
-                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
-//                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "POST"))
-                    .clearAuthentication(true)
-                    .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID", "remember-me")
-                    .logoutSuccessUrl("/login")
-        ;
+                .authenticated();
     }
-/*
-    @Override
-    @Bean
-    public UserDetailsService userDetailsServiceBean() throws Exception {
-        UserDetails abc = User.builder()
-                .username("qwe")
-                .password(encoder.encode("asd"))
-//                .roles(STUDENT.name())   //  ROLE_STUDENT
-                .authorities(STUDENT.getGrantedAuthorities())
-                .build();
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(encoder.encode("asdf"))
-//                .roles(ADMIN.name())   //  ROLE_ADMIN
-                .authorities(ADMIN.getGrantedAuthorities())
-                .build();
-        UserDetails adminTrainee = User.builder()
-                .username("admin2")
-                .password(encoder.encode("asdf"))
-//                .roles(ADMIN_TRAINEE.name())    //  ROLE_ADMIN_TRAINEE
-                .authorities(ADMIN_TRAINEE.getGrantedAuthorities())
-                .build();
-        return new InMemoryUserDetailsManager(abc,
-                admin,
-                adminTrainee);
-    }*/
 
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
